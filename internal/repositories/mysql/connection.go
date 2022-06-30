@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	mysql "github.com/go-sql-driver/mysql"
+	mysqldriver "github.com/go-sql-driver/mysql"
 )
 
 type Store struct {
@@ -12,7 +12,7 @@ type Store struct {
 }
 
 func New() *Store {
-	cfg := mysql.Config{
+	cfg := mysqldriver.Config{
 		User:   "root",
 		Passwd: "secret",
 		Net:    "tcp",
