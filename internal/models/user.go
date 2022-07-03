@@ -3,6 +3,7 @@ package models
 import "github.com/google/uuid"
 
 const UserDataTable = `user_data`
+const FriendsTable = `friends`
 
 // UserData - user information
 type UserData struct {

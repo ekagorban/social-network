@@ -1,0 +1,71 @@
+  version: '2'
+  services:
+    db:
+      image: mysql:8.0
+      restart: always
+      networks:
+        - sn-network
+      environment:
+        MYSQL_ROOT_PASSWORD: 'pass'
+        MYSQL_DATABASE: 'db'
+      container_name: golang_db
+      ports:
+        - "3306:3306"
+      tty: true
+      volumes:
+        - ./:/docker-entrypoint-initdb.d
+    app:
+      build:
+        context: ./
+      networks:
+        - sn-network
+      container_name: golang_app
+      ports:
+        - "3004:3004"
+      tty: true
+      depends_on:
+        - db
+      links:
+        - db
+  networks:
+    sn-network:
+      driver: "bridge"
+#  networks:
+#    sn-network:
+#        external:
+#            name: sn-network
+#version: '2'
+#services:
+#  web:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    # ports from container exposed to the docker machine and the guest machine
+#    ports:
+#      # 80 on the host, 8080 on the guest. Websever listens on 8080
+#      - "3004:3004" # http
+#    #  - "443:443" # https
+#    # file with environment declarations for the container
+#      #env_file:
+#    #  - docker/web/.env
+#    # Link to containers in another service
+#    links:
+#      - db
+#    # sync workspace folder with /go
+##    volumes:
+##      - ../../../../.:/go
+#  db:
+#    build:
+#      context: .
+#      dockerfile: docker/db/Dockerfile
+#    ports:
+#      - "3306:3306"
+#    environment:
+#      MYSQL_USER: gotest
+#      MYSQL_PASSWORD: gotest
+#      MYSQL_ROOT_PASSWORD: gotest
+#      MYSQL_DATABASE: local_gotest
+#    # sync folders. MySQL data is stored outside container so that rebuilding doesn't clear db.
+#    # folder is at workspace root.
+#    volumes:
+#      - ../../../../_local_mysql_data:/var/lib/mysql

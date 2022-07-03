@@ -1,72 +1,116 @@
 package mysql
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log"
+
 	"social-network/internal/models"
 
 	"github.com/google/uuid"
 )
 
 func (s *Store) Users() (users []models.UserData, err error) {
-	return nil, nil
-	// var (
-	// 	success bool
-	// 	lenData int
-	// )
-	// s.storageData.Range(func(key interface{}, value interface{}) bool {
-	// 	if id, ok := key.(uuid.UUID); ok {
-	// 		if model, ok := value.(models.User); ok {
-	// 			user := models.User{
-	// 				ID:      id,
-	// 				Name:    model.Name,
-	// 				Surname: model.Surname,
-	// 				Age:     model.Age,
-	// 				Gender:  model.Gender,
-	// 				Hobbies: model.Hobbies,
-	// 				City:    model.City,
-	// 			}
-	// 			lenData++
-	// 			users = append(users, user)
-	// 			success = true
-	// 			return true
-	// 		}
-	// 	}
-	// 	success = false
-	// 	return false
-	// })
-	//
-	// if lenData == 0 {
-	// 	return nil, nil
-	// }
-	//
-	// if !success {
-	// 	return nil, errors.New("s.storageData.Range")
-	// }
-	//
-	// return users, nil
+	query := fmt.Sprintf(`
+		select 
+			id,
+			name,
+			surname,
+			age,
+			gender,
+			hobbies,
+			city
+		from %s`, models.UserDataTable)
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("s.db.Query error: %v", err)
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}(rows)
+
+	for rows.Next() {
+		var user models.UserData
+
+		err = rows.Scan(&user.ID,
+			&user.Name,
+			&user.Surname,
+			&user.Age,
+			&user.Gender,
+			&user.Hobbies,
+			&user.City,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("rows.Scan error: %v", err)
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 
-func (s *Store) User(id uuid.UUID) (user models.UserData, exist bool, err error) {
-	return models.UserData{}, false, nil
-	// value, exist := s.storageData.Load(id)
-	// if !exist {
-	// 	return models.User{}, false, nil
-	// }
-	//
-	// user, ok := value.(models.User)
-	// if !ok {
-	// 	return models.User{}, false, errors.New("value.(models.User)")
-	// }
-	//
-	// return user, true, nil
+func (s *Store) User(id uuid.UUID) (user models.UserData, err error) {
+	query := fmt.Sprintf(`
+		select 
+			id,
+			name,
+			surname,
+			age,
+			gender,
+			hobbies,
+			city
+		from %s 
+		where 
+			id = ?`, models.UserDataTable)
+
+	err = s.db.QueryRow(query, id).
+		Scan(&user.ID,
+			&user.Name,
+			&user.Surname,
+			&user.Age,
+			&user.Gender,
+			&user.Hobbies,
+			&user.City)
+
+	if err != nil {
+		return models.UserData{}, err
+	}
+
+	return user, nil
 }
 
 func (s *Store) UpdateUser(id uuid.UUID, user models.UserData) (err error) {
-	//	_, exist := s.storageData.Load(id)
-	// if !exist {
-	// 	return fmt.Errorf("%w", errapp.UserDataNotFound)
-	// }
-	//
-	// s.storageData.Store(id, user)
+	query := fmt.Sprintf(`
+		update %s
+		set
+			name = ?,
+			surname = ?,
+			age = ?,
+			gender = ?,
+			hobbies = ?,
+			city = ?
+		where id = ?
+	`, models.UserDataTable)
+
+	err = s.db.QueryRow(query, id).
+		Scan(&user.Name,
+			&user.Surname,
+			&user.Age,
+			&user.Gender,
+			&user.Hobbies,
+			&user.City,
+			&user.ID)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -93,30 +137,20 @@ func (s *Store) Friends(id uuid.UUID) (users []models.UserData, err error) {
 	return nil, nil
 }
 func (s *Store) AddFriend(userID uuid.UUID, friendID uuid.UUID) (err error) {
-	// valueUser, exist := s.storageData.Load(userID)
-	// if !exist {
-	// 	return fmt.Errorf("%w", errapp.UserDataNotFound)
-	// }
-	//
-	// user, ok := valueUser.(models.User)
-	// if !ok {
-	// 	return errors.New("valueUser.(models.User)")
-	// }
-	//
-	// valueFriend, exist := s.storageData.Load(friendID)
-	// if !exist {
-	// 	return fmt.Errorf("%w", errapp.UserDataNotFound)
-	// }
-	// friend, ok := valueFriend.(models.User)
-	// if !ok {
-	// 	return errors.New("valueFriend.(models.User)")
-	// }
-	//
-	// user.Friends = append(user.Friends, friendID)
-	// friend.Friends = append(friend.Friends, userID)
-	//
-	// s.storageData.Store(user.ID, user)
-	// s.storageData.Store(friend.ID, friend)
+	// todo transaction and friend
+	query := fmt.Sprintf(`
+		insert into %s (
+			user_id,
+			friend_id
+		) values (?, ?);`, models.FriendsTable)
+
+	_, err = s.db.ExecContext(context.Background(), query,
+		userID,
+		friendID,
+	)
+	if err != nil {
+		return fmt.Errorf("s.db.ExecContext error: %v", err)
+	}
 
 	return nil
 }

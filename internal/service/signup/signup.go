@@ -29,8 +29,6 @@ type Service interface {
 type Storage interface {
 	CheckLoginExist(login string) (exist bool, err error)
 	CreateUser(accessData models.UserAccess, userData models.UserData) (err error)
-	// CreateUserAccess(user models.UserAccess) (err error)
-	// CreateUserData(user models.UserData) (err error)
 }
 
 type service struct {
@@ -52,7 +50,10 @@ func (s *service) CreateUser(data Data) (err error) {
 	}
 
 	id := uuid.New()
-	encryptedPassword := password.Encrypt(data.Password)
+	encryptedPassword, err := password.Encrypt(data.Password)
+	if err != nil {
+		return err
+	}
 
 	accessModel := models.UserAccess{
 		Login:    data.Login,

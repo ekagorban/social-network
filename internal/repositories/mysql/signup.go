@@ -51,14 +51,14 @@ func (s *Store) CreateUser(access models.UserAccess, user models.UserData) (err 
 
 	log.Println("CreateUser start transaction...")
 
-	err = s.createAccessData(ctx, tx, access)
-	if err != nil {
-		return fmt.Errorf("s.createAccessData error: %v", err)
-	}
-
 	err = s.createUserData(ctx, tx, user)
 	if err != nil {
 		return fmt.Errorf("s.createUserData error: %v", err)
+	}
+
+	err = s.createAccessData(ctx, tx, access)
+	if err != nil {
+		return fmt.Errorf("s.createAccessData error: %v", err)
 	}
 
 	if err = tx.Commit(); err != nil {

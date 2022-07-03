@@ -13,8 +13,6 @@ import (
 )
 
 func Start() {
-
-	//storage := memory.New()
 	storage := mysql.New()
 
 	userService := user.NewService(storage)
@@ -31,7 +29,7 @@ func Start() {
 	routes.SignIn(r, authService)
 	routes.User(r, userService, authService)
 
-	if err := r.Run("127.0.0.1:8081"); err != nil {
+	if err := r.Run(":3004"); err != nil {
 		log.Printf("%v", err)
 	}
 }

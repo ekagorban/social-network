@@ -1,28 +1,15 @@
 package user
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
+
 	"social-network/internal/errapp"
 	"social-network/internal/models"
 
 	"github.com/google/uuid"
 )
-
-// type SignInItem struct {
-// 	Login    string `json:"login,required"`
-// 	Password string `json:"password,required"`
-// }
-
-// type SignUpItem struct {
-// 	Login    string `json:"login,required"`
-// 	Password string `json:"password,required"`
-//
-// 	Name    string `json:"name,required"`
-// 	Surname string `json:"surname,required"`
-// 	Age     uint   `json:"age,required"`
-// 	Gender  string `json:"gender,required"`
-// 	Hobbies string `json:"hobbies,required"`
-// 	City    string `json:"city,required"`
-// }
 
 type Data struct {
 	ID      uuid.UUID `json:"id"`
@@ -44,8 +31,7 @@ type Service interface {
 
 type Storage interface {
 	Users() (users []models.UserData, err error)
-	User(id uuid.UUID) (user models.UserData, exist bool, err error)
-	//CreateUserData(user models.UserData) (err error)
+	User(id uuid.UUID) (user models.UserData, err error)
 	UpdateUser(id uuid.UUID, user models.UserData) (err error)
 	Friends(id uuid.UUID) (users []models.UserData, err error)
 	AddFriend(userID uuid.UUID, friendID uuid.UUID) (err error)
@@ -62,7 +48,7 @@ func NewService(store Storage) Service {
 func (s *service) GetAll() (users []Data, err error) {
 	usersModel, err := s.storage.Users()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("s.storage.Users error: %v", err)
 	}
 
 	users = make([]Data, len(usersModel))
@@ -81,13 +67,13 @@ func (s *service) GetAll() (users []Data, err error) {
 }
 
 func (s *service) GetOne(id uuid.UUID) (user Data, err error) {
-	userModel, exist, err := s.storage.User(id)
+	userModel, err := s.storage.User(id)
 	if err != nil {
-		return Data{}, err
-	}
+		if errors.Is(err, sql.ErrNoRows) {
+			return Data{}, errapp.UserDataNotFound
+		}
 
-	if !exist {
-		return Data{}, errapp.UserDataNotFound
+		return Data{}, fmt.Errorf("s.storage.User error: %v", err)
 	}
 
 	user = Data{
@@ -114,7 +100,16 @@ func (s *service) UpdateOne(id uuid.UUID, user Data) error {
 		City:    user.City,
 	}
 
-	return s.storage.UpdateUser(id, userModel)
+	err := s.storage.UpdateUser(id, userModel)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errapp.UserDataNotFound
+		}
+
+		return fmt.Errorf("s.storage.UpdateUser error: %v", err)
+	}
+
+	return nil
 }
 
 func (s *service) GetUserFriends(id uuid.UUID) (users []Data, err error) {

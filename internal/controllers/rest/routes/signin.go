@@ -1,9 +1,12 @@
 package routes
 
 import (
+	"errors"
+	"log"
 	"net/http"
 
 	"social-network/internal/controllers/rest/response"
+	"social-network/internal/errapp"
 	"social-network/internal/service/auth"
 
 	"github.com/gin-gonic/gin"
@@ -22,13 +25,20 @@ func signIn(service auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var dataSignIn auth.SignInData
 		if err := c.ShouldBindJSON(&dataSignIn); err != nil {
+			log.Println(err)
 			response.ErrorMessageJSON(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		data, err := service.SignIn(dataSignIn)
 		if err != nil {
-			response.ErrorMessageJSON(c, http.StatusUnauthorized, err.Error())
+			log.Println(err)
+			if errors.Is(err, errapp.AccessDataNotFound) {
+				response.ErrorMessageJSON(c, http.StatusConflict, errapp.AccessDataNotFound.Error())
+				return
+			}
+
+			response.ErrorMessageJSON(c, http.StatusUnauthorized, response.InternalError)
 			return
 		}
 

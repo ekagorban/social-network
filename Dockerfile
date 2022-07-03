@@ -8,6 +8,6 @@ RUN go mod download
 
 RUN go build -o /social-network
 
-#EXPOSE 8080
+EXPOSE 3004
 
 CMD [ "/social-network" ]

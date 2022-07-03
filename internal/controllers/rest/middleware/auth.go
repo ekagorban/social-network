@@ -13,16 +13,13 @@ func CheckAccess(service auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			response.ErrorMessageJSON(c, http.StatusUnauthorized, "empty")
+			response.ErrorMessageJSON(c, http.StatusUnauthorized, response.EmptyToken)
 			return
 		}
-		allow, err := service.CheckToken(authHeader)
+
+		err := service.CheckToken(authHeader)
 		if err != nil {
-			response.ErrorMessageJSON(c, http.StatusUnauthorized, err.Error())
-			return
-		}
-		if !allow {
-			response.ErrorMessageJSON(c, http.StatusUnauthorized, "not allow")
+			response.ErrorMessageJSON(c, http.StatusUnauthorized, response.InvalidToken)
 			return
 		}
 
