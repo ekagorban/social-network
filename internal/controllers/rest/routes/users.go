@@ -128,7 +128,7 @@ func getUserFriends(service user.Service) gin.HandlerFunc {
 		}
 
 		if len(data) == 0 {
-			response.SuccessMessageJSON(c, http.StatusNoContent, nil)
+			response.SuccessMessageJSON(c, http.StatusNoContent, data)
 			return
 		}
 

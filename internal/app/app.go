@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 
+	"social-network/internal/config"
 	"social-network/internal/controllers/rest/routes"
 	"social-network/internal/repositories/mysql"
 	"social-network/internal/service/auth"
@@ -13,7 +14,15 @@ import (
 )
 
 func Start() {
-	storage := mysql.New()
+	log.Println("start application...")
+
+	// conf := config.New()
+
+	dbConf := config.NewDB()
+
+	log.Println("success get config")
+
+	storage := mysql.New(dbConf)
 
 	userService := user.NewService(storage)
 	signUpService := signup.NewService(storage)

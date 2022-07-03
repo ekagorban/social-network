@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -115,42 +116,93 @@ func (s *Store) UpdateUser(id uuid.UUID, user models.UserData) (err error) {
 }
 
 func (s *Store) Friends(id uuid.UUID) (users []models.UserData, err error) {
-	// value, exist := s.storageData.Load(id)
-	// if !exist {
-	// 	return nil, fmt.Errorf("%w", errapp.UserDataNotFound)
-	// }
-	//
-	// user, ok := value.(models.User)
-	// if !ok {
-	// 	return nil, errors.New("value.(models.User)")
-	// }
-	//
-	// friends := make([]models.User, len(user.Friends))
-	// for i, friendID := range user.Friends {
-	// 	friends[i], exist, err = s.User(friendID)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-	//
-	// return friends, nil
-	return nil, nil
+	query := fmt.Sprintf(`
+		select 
+			id,
+			name,
+			surname,
+			age,
+			gender,
+			hobbies,
+			city
+		from %s 
+		where id in (
+						select friend_id 
+						from %s where user_id = ?
+					)
+	`, models.UserDataTable, models.FriendsTable)
+
+	rows, err := s.db.Query(query, id)
+	if err != nil {
+		return nil, fmt.Errorf("s.db.Query error: %v", err)
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Printf("rows.Close error: %v", err)
+		}
+	}(rows)
+
+	for rows.Next() {
+		var user models.UserData
+
+		err = rows.Scan(&user.ID,
+			&user.Name,
+			&user.Surname,
+			&user.Age,
+			&user.Gender,
+			&user.Hobbies,
+			&user.City,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("rows.Scan error: %v", err)
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 func (s *Store) AddFriend(userID uuid.UUID, friendID uuid.UUID) (err error) {
-	// todo transaction and friend
-	query := fmt.Sprintf(`
-		insert into %s (
-			user_id,
-			friend_id
-		) values (?, ?);`, models.FriendsTable)
+	ctx := context.Background()
 
-	_, err = s.db.ExecContext(context.Background(), query,
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("s.db.BeginTx error: %v", err)
+	}
+	defer func(tx *sql.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			if !errors.Is(err, sql.ErrTxDone) {
+				log.Printf("tx.Rollback error: %v", err)
+			}
+		}
+	}(tx)
+
+	log.Println("AddFriend start transaction...")
+
+	query := fmt.Sprintf(`
+		insert into %s 
+			(user_id, friend_id) values
+			(?, ?),
+			(?, ?);`, models.FriendsTable)
+
+	_, err = tx.ExecContext(context.Background(), query,
 		userID,
 		friendID,
+		friendID,
+		userID,
 	)
+
 	if err != nil {
 		return fmt.Errorf("s.db.ExecContext error: %v", err)
 	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("tx.Commit error: %v", err)
+	}
+
+	log.Println("AddFriend commit transaction success")
 
 	return nil
 }

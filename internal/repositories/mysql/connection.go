@@ -2,8 +2,11 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
+
+	"social-network/internal/errapp"
 
 	mysqldriver "github.com/go-sql-driver/mysql"
 )
@@ -12,72 +15,105 @@ type Store struct {
 	db *sql.DB
 }
 
-func New() *Store {
-	cfg := mysqldriver.Config{
-		User:   "root",
-		Passwd: "pass",
-		Net:    "tcp",
-		Addr:   "db:3306",
-		DBName: "db",
-	}
-	dst := cfg.FormatDSN()
-	log.Println(dst)
-	db, err := sql.Open("mysql", dst)
+func New(cfg mysqldriver.Config) (*Store, error) {
+	dsn := cfg.FormatDSN()
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("sql.Open error: %v; DSN: %s", err, dsn)
 	}
 
-	for db.Ping() != nil {
-		log.Println("here0")
-		time.Sleep(1 * time.Second)
+	err = tryConnect(db)
+	if err != nil {
+		return nil, fmt.Errorf("tryConnect error: %v", err)
 	}
-	log.Println("here")
-	_, err = db.Exec(`
-create table user_data(
-    id      varchar(36)   not null
-        primary key,
-    name    varchar(100)  null,
-    surname varchar(100)  null,
-    age     smallint      null,
-    gender  char          null,
-    hobbies varchar(1000) null,
-    city    varchar(100)  null
-);
-`)
-	log.Println(err)
 
-	_, err = db.Exec(`
-create table user_access
-(
-    login    varchar(20) not null
-        primary key,
-    password varchar(50) not null,
-    user_id  varchar(36) null,
-    constraint user_access_user_data_id_fk
-        foreign key (user_id) references user_data (id)
-            on update cascade on delete cascade
-);
-`)
-	log.Println(err)
+	err = initTables(db)
+	if err != nil {
+		return nil, fmt.Errorf("initTables error: %v", err)
+	}
 
-	_, err = db.Exec(`
-create table friends
-(
-    user_id   varchar(36) null,
-    friend_id varchar(36) null,
-    constraint friend_id_fk
-        foreign key (friend_id) references user_data (id)
-            on update cascade on delete cascade,
-    constraint user_id_fk
-        foreign key (user_id) references user_data (id)
-            on update cascade on delete cascade
-);
-`)
-	log.Println(err)
-	return &Store{db}
+	store := Store{
+		db: db,
+	}
+
+	return &store, nil
 }
 
-// docker run  --name my-mysql -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=test -p 33070:3306 -d mysql:8.0
-// docker run --network todo-app --network-alias mysql --name my-mysql -e MYSQL_ROOT_PASSWORD=secret -e MYSQL_DATABASE=test -p 3306:3306 -d mysql:8.0
+func tryConnect(db *sql.DB) error {
+	numAttempt := 1
 
-//-v todo-mysql-data:/var/lib/mysql
+	for db.Ping() != nil {
+
+		if numAttempt > 10 {
+			log.Printf("fail db ping after several attempts")
+			return errapp.DBPing
+		}
+
+		sleepTime := time.Duration(numAttempt) * time.Second
+		log.Printf("fail db ping; attempt %v; need sleep %s seconds", numAttempt, sleepTime)
+		time.Sleep(sleepTime)
+
+		numAttempt++
+	}
+
+	log.Printf("success db ping; attempt %v", numAttempt)
+	return nil
+}
+
+func initTables(db *sql.DB) (err error) {
+	_, err = db.Exec(`
+		create table if not exists user_data
+		(
+			id      varchar(36)   not null
+				primary key,
+			name    varchar(100)  null,
+			surname varchar(100)  null,
+			age     smallint      null,
+			gender  char          null,
+			hobbies varchar(1000) null,
+			city    varchar(100)  null
+		);
+	`)
+
+	if err != nil {
+		return fmt.Errorf("create table user_data error: %v", err)
+	}
+
+	_, err = db.Exec(`
+		create table if not exists user_access
+		(
+			login    varchar(20)  not null
+				primary key,
+			password varchar(100) not null,
+			user_id  varchar(36)  null,
+			constraint user_access_user_data_id_fk
+				foreign key (user_id) references user_data (id)
+					on update cascade on delete cascade
+		);
+	`)
+
+	if err != nil {
+		return fmt.Errorf("create table user_access error: %v", err)
+	}
+
+	_, err = db.Exec(`
+		create table if not exists friends
+		(
+			user_id   varchar(36) not null,
+			friend_id varchar(36) not null,
+			primary key (user_id, friend_id),
+			constraint friend_id_fk
+				foreign key (friend_id) references user_data (id)
+					on update cascade on delete cascade,
+			constraint user_id_fk
+				foreign key (user_id) references user_data (id)
+					on update cascade on delete cascade
+		);
+	`)
+
+	if err != nil {
+		return fmt.Errorf("create table friends error: %v", err)
+	}
+
+	return nil
+}
