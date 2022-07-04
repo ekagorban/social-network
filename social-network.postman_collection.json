@@ -1,0 +1,363 @@
+{
+	"info": {
+		"_postman_id": "62f042e0-ffbe-48d6-a628-d572c99fe8df",
+		"name": "social-network",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "16768423"
+	},
+	"item": [
+		{
+			"name": "sigup",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\":\"login_user1\",\n    \"password\":\"password1\",\n    \"name\":\"name_user1\",\n    \"surname\":\"surname_user1\",\n    \"age\":20,\n    \"gender\":\"m\",\n    \"hobbies\":\"hobbies1\",\n    \"city\":\"city1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/signup",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "sigin",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\":\"login_user1\",\n    \"password\":\"password1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/signin",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"signin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get user",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/user/f4217079-4181-45fe-9659-69f1d0d2d4b7",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"user",
+						"f4217079-4181-45fe-9659-69f1d0d2d4b7"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all users",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTYzMzIxNDksImlhdCI6MTY1NjMyODU0OSwidXNlcm5hbWUiOiJmZmYifQ.1WhBjA89hGSoUOh5qnignzGb7_ccjeBi1NIdRVWEWMk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/users",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get friends",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/friends/f4217079-4181-45fe-9659-69f1d0d2d4b5",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"friends",
+						"f4217079-4181-45fe-9659-69f1d0d2d4b5"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add friend",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/friend/dcf4e0e2-36a6-408f-a237-1665ec7dda63/f4217079-4181-45fe-9659-69f1d0d2d4b5",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"friend",
+						"dcf4e0e2-36a6-408f-a237-1665ec7dda63",
+						"f4217079-4181-45fe-9659-69f1d0d2d4b5"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update user",
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"login\":\"login_user1\",\n    \"password\":\"password1\",\n    \"name\":\"name_user1\",\n    \"surname\":\"surname_user1\",\n    \"age\":20,\n    \"gender\":\"m\",\n    \"hobbies\":\"hobbies_changed1\",\n    \"city\":\"city_changed1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/user/ffbd573d-81b0-46ef-9f15-10a0c127499d",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"user",
+						"ffbd573d-81b0-46ef-9f15-10a0c127499d"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "TOKEN",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTY5Nzg5MDUsImlhdCI6MTY1Njg5MjUwNSwidXNlcm5hbWUiOiJ1c2VyMSJ9.Pq6iSdJI8IMurcqRlgQSgPpi8m58tj_Bgi5D9ifM2PE",
+			"type": "string"
+		},
+		{
+			"key": "PORT",
+			"value": "3004",
+			"type": "string"
+		},
+		{
+			"key": "HOST",
+			"value": "http://127.0.0.1",
+			"type": "string"
+		}
+	]
+}
