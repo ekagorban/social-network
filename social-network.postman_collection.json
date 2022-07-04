@@ -100,7 +100,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{HOST}}:{{PORT}}/v1/user/f4217079-4181-45fe-9659-69f1d0d2d4b7",
+					"raw": "{{HOST}}:{{PORT}}/v1/user/id",
 					"host": [
 						"{{HOST}}"
 					],
@@ -108,7 +108,7 @@
 					"path": [
 						"v1",
 						"user",
-						"f4217079-4181-45fe-9659-69f1d0d2d4b7"
+						"id"
 					]
 				}
 			},
@@ -209,7 +209,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{HOST}}:{{PORT}}/v1/friends/f4217079-4181-45fe-9659-69f1d0d2d4b5",
+					"raw": "{{HOST}}:{{PORT}}/v1/friends/id",
 					"host": [
 						"{{HOST}}"
 					],
@@ -217,7 +217,7 @@
 					"path": [
 						"v1",
 						"friends",
-						"f4217079-4181-45fe-9659-69f1d0d2d4b5"
+						"id"
 					]
 				}
 			},
@@ -258,7 +258,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{HOST}}:{{PORT}}/v1/friend/dcf4e0e2-36a6-408f-a237-1665ec7dda63/f4217079-4181-45fe-9659-69f1d0d2d4b5",
+					"raw": "{{HOST}}:{{PORT}}/v1/friend/userID/friendID",
 					"host": [
 						"{{HOST}}"
 					],
@@ -266,8 +266,8 @@
 					"path": [
 						"v1",
 						"friend",
-						"dcf4e0e2-36a6-408f-a237-1665ec7dda63",
-						"f4217079-4181-45fe-9659-69f1d0d2d4b5"
+						"userID",
+						"friendID"
 					]
 				}
 			},
@@ -308,7 +308,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{HOST}}:{{PORT}}/v1/user/ffbd573d-81b0-46ef-9f15-10a0c127499d",
+					"raw": "{{HOST}}:{{PORT}}/v1/user/id",
 					"host": [
 						"{{HOST}}"
 					],
@@ -316,7 +316,7 @@
 					"path": [
 						"v1",
 						"user",
-						"ffbd573d-81b0-46ef-9f15-10a0c127499d"
+						"id"
 					]
 				}
 			},
