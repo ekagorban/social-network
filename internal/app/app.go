@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"log"
 
 	"social-network/internal/config"
@@ -14,19 +15,22 @@ import (
 )
 
 func Start() {
-	log.Println("start application...")
+	log.Println("start init application...")
 
-	// conf := config.New()
+	appConf := config.AppNew()
+	dbConf := config.DBNew()
 
-	dbConf := config.NewDB()
+	log.Printf("success get app config: %+v; db config: %+v; ", appConf, dbConf)
 
-	log.Println("success get config")
-
-	storage := mysql.New(dbConf)
+	storage, err := mysql.New(dbConf)
+	if err != nil {
+		log.Printf("mysql.New error: %v", err)
+		return
+	}
 
 	userService := user.NewService(storage)
 	signUpService := signup.NewService(storage)
-	authService := auth.NewService(storage)
+	authService := auth.NewService(appConf, storage)
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -38,7 +42,9 @@ func Start() {
 	routes.SignIn(r, authService)
 	routes.User(r, userService, authService)
 
-	if err := r.Run(":3004"); err != nil {
+	log.Println("success finish init application")
+
+	if err := r.Run(fmt.Sprintf(":%s", appConf.ListenPort)); err != nil {
 		log.Printf("%v", err)
 	}
 }

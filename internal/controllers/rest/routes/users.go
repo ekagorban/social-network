@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"context"
 	"errors"
+	"log"
 	"net/http"
 
 	"social-network/internal/controllers/rest/middleware"
@@ -39,9 +41,14 @@ func User(r *gin.Engine, service user.Service, authService auth.Service) {
 // getUsers - get all users
 func getUsers(service user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		data, err := service.GetAll()
+		ctx, cancel := context.WithCancel(c)
+		defer cancel()
+
+		data, err := service.GetAll(ctx)
 		if err != nil {
-			response.ErrorMessageJSON(c, http.StatusInternalServerError, err.Error())
+			log.Printf("service.GetAll error: %v", err)
+
+			response.ErrorMessageJSON(c, http.StatusInternalServerError, response.InternalError)
 			return
 		}
 
@@ -58,19 +65,24 @@ func getUsers(service user.Service) gin.HandlerFunc {
 // getUser - get one user by id
 func getUser(service user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx, cancel := context.WithCancel(c)
+		defer cancel()
+
 		id, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			response.ErrorMessageJSON(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		data, err := service.GetOne(id)
+		data, err := service.GetOne(ctx, id)
 		if err != nil {
+			log.Printf("service.GetOne error: %v", err)
+
 			if errors.Is(err, errapp.UserDataNotFound) {
-				response.SuccessMessageJSON(c, http.StatusNotFound, nil)
+				response.ErrorMessageJSON(c, http.StatusNotFound, errapp.UserDataNotFound.Error())
 				return
 			}
-			response.ErrorMessageJSON(c, http.StatusInternalServerError, err.Error())
+			response.ErrorMessageJSON(c, http.StatusInternalServerError, response.InternalError)
 			return
 		}
 
@@ -82,6 +94,9 @@ func getUser(service user.Service) gin.HandlerFunc {
 //
 func putUser(service user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx, cancel := context.WithCancel(c)
+		defer cancel()
+
 		id, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			response.ErrorMessageJSON(c, http.StatusBadRequest, err.Error())
@@ -94,13 +109,15 @@ func putUser(service user.Service) gin.HandlerFunc {
 			return
 		}
 
-		err = service.UpdateOne(id, data)
+		err = service.UpdateOne(ctx, id, data)
 		if err != nil {
+			log.Printf("service.UpdateOne error: %v", err)
+
 			if errors.Is(err, errapp.UserDataNotFound) {
-				response.SuccessMessageJSON(c, http.StatusNotFound, nil)
+				response.ErrorMessageJSON(c, http.StatusNotFound, errapp.UserDataNotFound.Error())
 				return
 			}
-			response.ErrorMessageJSON(c, http.StatusInternalServerError, err.Error())
+			response.ErrorMessageJSON(c, http.StatusInternalServerError, response.InternalError)
 			return
 		}
 
@@ -111,24 +128,30 @@ func putUser(service user.Service) gin.HandlerFunc {
 
 func getUserFriends(service user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx, cancel := context.WithCancel(c)
+		defer cancel()
+
 		id, err := uuid.Parse(c.Param("id"))
 		if err != nil {
 			response.ErrorMessageJSON(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		data, err := service.GetUserFriends(id)
+		data, err := service.GetUserFriends(ctx, id)
 		if err != nil {
+			log.Printf("service.GetUserFriends error: %v", err)
+
 			if errors.Is(err, errapp.UserDataNotFound) {
-				response.SuccessMessageJSON(c, http.StatusNotFound, nil)
+				response.ErrorMessageJSON(c, http.StatusNotFound, errapp.UserDataNotFound.Error())
 				return
 			}
-			response.ErrorMessageJSON(c, http.StatusInternalServerError, err.Error())
+
+			response.ErrorMessageJSON(c, http.StatusInternalServerError, response.InternalError)
 			return
 		}
 
 		if len(data) == 0 {
-			response.SuccessMessageJSON(c, http.StatusNoContent, data)
+			response.SuccessMessageJSON(c, http.StatusNoContent, nil)
 			return
 		}
 
@@ -139,6 +162,9 @@ func getUserFriends(service user.Service) gin.HandlerFunc {
 
 func putUserFriend(service user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx, cancel := context.WithCancel(c)
+		defer cancel()
+
 		userID, err := uuid.Parse(c.Param("userID"))
 		if err != nil {
 			response.ErrorMessageJSON(c, http.StatusBadRequest, err.Error())
@@ -151,13 +177,16 @@ func putUserFriend(service user.Service) gin.HandlerFunc {
 			return
 		}
 
-		err = service.AddUserFriend(userID, friendID)
+		err = service.AddUserFriend(ctx, userID, friendID)
 		if err != nil {
+			log.Printf("service.AddUserFriend error: %v", err)
+
 			if errors.Is(err, errapp.UserDataNotFound) {
-				response.SuccessMessageJSON(c, http.StatusNotFound, nil)
+				response.ErrorMessageJSON(c, http.StatusNotFound, errapp.UserDataNotFound.Error())
 				return
 			}
-			response.ErrorMessageJSON(c, http.StatusInternalServerError, err.Error())
+
+			response.ErrorMessageJSON(c, http.StatusInternalServerError, response.InternalError)
 			return
 		}
 

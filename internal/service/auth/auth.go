@@ -1,11 +1,12 @@
 package auth
 
 import (
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 	"time"
 
+	"social-network/internal/config"
 	"social-network/internal/errapp"
 	"social-network/internal/password"
 
@@ -23,12 +24,12 @@ type AccessData struct {
 }
 
 type Service interface {
-	SignIn(data SignInData) (AccessData, error)
+	SignIn(ctx context.Context, data SignInData) (AccessData, error)
 	CheckToken(token string) error
 }
 
 type Storage interface {
-	LoadPassword(login string) (userID uuid.UUID, password string, err error)
+	LoadPassword(ctx context.Context, login string) (userID uuid.UUID, password string, err error)
 }
 
 type service struct {
@@ -37,26 +38,26 @@ type service struct {
 	tokenExpired time.Duration
 }
 
-func NewService(store Storage) Service {
+func NewService(appConf config.App, store Storage) Service {
 	return &service{
 		storage:      store,
-		signingKey:   []byte("sn-network"),
-		tokenExpired: 24 * time.Hour,
+		signingKey:   appConf.TokenSigningKey,
+		tokenExpired: appConf.TokenTimeExpired,
 	}
 }
 
-func (s *service) SignIn(data SignInData) (AccessData, error) {
-	userID, passw, err := s.storage.LoadPassword(data.Login)
+func (s *service) SignIn(ctx context.Context, data SignInData) (AccessData, error) {
+	userID, userPassword, err := s.storage.LoadPassword(ctx, data.Login)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return AccessData{}, errapp.AccessDataNotFound
+		if errors.Is(err, errapp.AccessDataNotFound) {
+			return AccessData{}, fmt.Errorf("s.storage.LoadPassword error: %w", errapp.AccessDataNotFound)
 		}
 		return AccessData{}, fmt.Errorf("s.storage.LoadPassword error: %v", err)
 	}
 
-	err = password.Check(passw)
+	err = password.Check(userPassword)
 	if err != nil {
-		return AccessData{}, err
+		return AccessData{}, fmt.Errorf("password.Check error: %v", err)
 	}
 
 	token, err := s.generateToken(data.Login)
@@ -75,6 +76,10 @@ func (s *service) SignIn(data SignInData) (AccessData, error) {
 func (s *service) CheckToken(token string) error {
 	err := s.parseToken(token)
 	if err != nil {
+		if errors.Is(err, errapp.InvalidToken) {
+			return fmt.Errorf("s.parseToken error: %w", errapp.InvalidToken)
+		}
+
 		return fmt.Errorf("s.parseToken error: %v", err)
 	}
 

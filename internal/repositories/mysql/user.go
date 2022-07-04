@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"log"
 
+	"social-network/internal/errapp"
 	"social-network/internal/models"
 
 	"github.com/google/uuid"
 )
 
-func (s *Store) Users() (users []models.UserData, err error) {
+func (s *Store) Users(ctx context.Context) (users []models.UserData, err error) {
 	query := fmt.Sprintf(`
 		select 
 			id,
@@ -24,16 +25,11 @@ func (s *Store) Users() (users []models.UserData, err error) {
 			city
 		from %s`, models.UserDataTable)
 
-	rows, err := s.db.Query(query)
+	rows, err := s.db.QueryContext(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("s.db.Query error: %v", err)
+		return nil, fmt.Errorf("s.db.QueryContext error: %v", err)
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Printf("rows.Close error: %v", err)
-		}
-	}(rows)
+	defer rowsClose(rows)
 
 	for rows.Next() {
 		var user models.UserData
@@ -56,7 +52,7 @@ func (s *Store) Users() (users []models.UserData, err error) {
 	return users, nil
 }
 
-func (s *Store) User(id uuid.UUID) (user models.UserData, err error) {
+func (s *Store) User(ctx context.Context, id uuid.UUID) (user models.UserData, err error) {
 	query := fmt.Sprintf(`
 		select 
 			id,
@@ -70,7 +66,7 @@ func (s *Store) User(id uuid.UUID) (user models.UserData, err error) {
 		where 
 			id = ?`, models.UserDataTable)
 
-	err = s.db.QueryRow(query, id).
+	err = s.db.QueryRowContext(ctx, query, id).
 		Scan(&user.ID,
 			&user.Name,
 			&user.Surname,
@@ -80,13 +76,22 @@ func (s *Store) User(id uuid.UUID) (user models.UserData, err error) {
 			&user.City)
 
 	if err != nil {
-		return models.UserData{}, err
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.UserData{}, errapp.UserDataNotFound
+		}
+
+		return models.UserData{}, fmt.Errorf("s.db.QueryRowContext error: %v", err)
 	}
 
 	return user, nil
 }
 
-func (s *Store) UpdateUser(id uuid.UUID, user models.UserData) (err error) {
+func (s *Store) UpdateUser(ctx context.Context, id uuid.UUID, user models.UserData) error {
+	_, err := s.User(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	query := fmt.Sprintf(`
 		update %s
 		set
@@ -99,49 +104,48 @@ func (s *Store) UpdateUser(id uuid.UUID, user models.UserData) (err error) {
 		where id = ?
 	`, models.UserDataTable)
 
-	err = s.db.QueryRow(query, id).
-		Scan(&user.Name,
-			&user.Surname,
-			&user.Age,
-			&user.Gender,
-			&user.Hobbies,
-			&user.City,
-			&user.ID)
+	_, err = s.db.ExecContext(ctx, query,
+		user.Name,
+		user.Surname,
+		user.Age,
+		user.Gender,
+		user.Hobbies,
+		user.City,
+		id)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("s.db.ExecContext error: %v", err)
 	}
 
 	return nil
 }
 
-func (s *Store) Friends(id uuid.UUID) (users []models.UserData, err error) {
-	query := fmt.Sprintf(`
-		select 
-			id,
-			name,
-			surname,
-			age,
-			gender,
-			hobbies,
-			city
-		from %s 
-		where id in (
-						select friend_id 
-						from %s where user_id = ?
-					)
-	`, models.UserDataTable, models.FriendsTable)
-
-	rows, err := s.db.Query(query, id)
+func (s *Store) Friends(ctx context.Context, id uuid.UUID) (users []models.UserData, err error) {
+	_, err = s.User(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("s.db.Query error: %v", err)
+		return nil, err
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Printf("rows.Close error: %v", err)
-		}
-	}(rows)
+
+	query := fmt.Sprintf(`
+		select
+					friend.id,
+					friend.name,
+					friend.surname,
+					friend.age,
+					friend.gender,
+					friend.hobbies,
+					friend.city
+		from %s friend
+		join %s fs on friend.id = fs.friend_id
+		join %s user on user.id = fs.user_id
+		where user.id = ?
+	`, models.UserDataTable, models.FriendsTable, models.UserDataTable)
+
+	rows, err := s.db.QueryContext(ctx, query, id)
+	if err != nil {
+		return nil, fmt.Errorf("s.db.QueryContext error: %v", err)
+	}
+	defer rowsClose(rows)
 
 	for rows.Next() {
 		var user models.UserData
@@ -163,35 +167,33 @@ func (s *Store) Friends(id uuid.UUID) (users []models.UserData, err error) {
 
 	return users, nil
 }
-func (s *Store) AddFriend(userID uuid.UUID, friendID uuid.UUID) (err error) {
-	ctx := context.Background()
+func (s *Store) AddFriend(ctx context.Context, userID uuid.UUID, friendID uuid.UUID) error {
+	_, err := s.User(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.User(ctx, friendID)
+	if err != nil {
+		return err
+	}
 
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("s.db.BeginTx error: %v", err)
 	}
-	defer func(tx *sql.Tx) {
-		err := tx.Rollback()
-		if err != nil {
-			if !errors.Is(err, sql.ErrTxDone) {
-				log.Printf("tx.Rollback error: %v", err)
-			}
-		}
-	}(tx)
+	defer transactionRollback(tx)
 
 	log.Println("AddFriend start transaction...")
 
 	query := fmt.Sprintf(`
 		insert into %s 
 			(user_id, friend_id) values
-			(?, ?),
 			(?, ?);`, models.FriendsTable)
 
-	_, err = tx.ExecContext(context.Background(), query,
+	_, err = tx.ExecContext(ctx, query,
 		userID,
 		friendID,
-		friendID,
-		userID,
 	)
 
 	if err != nil {

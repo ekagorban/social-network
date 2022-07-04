@@ -1,7 +1,7 @@
 package signup
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
 	"social-network/internal/errapp"
@@ -23,12 +23,12 @@ type Data struct {
 }
 
 type Service interface {
-	CreateUser(data Data) (err error)
+	CreateUser(ctx context.Context, data Data) (err error)
 }
 
 type Storage interface {
-	CheckLoginExist(login string) (exist bool, err error)
-	CreateUser(accessData models.UserAccess, userData models.UserData) (err error)
+	CheckLoginExist(ctx context.Context, login string) (exist bool, err error)
+	CreateUser(ctx context.Context, accessData models.UserAccess, userData models.UserData) (err error)
 }
 
 type service struct {
@@ -39,20 +39,20 @@ func NewService(store Storage) Service {
 	return &service{store}
 }
 
-func (s *service) CreateUser(data Data) (err error) {
-	err = s.checkUserLogin(data.Login)
+func (s *service) CreateUser(ctx context.Context, data Data) error {
+	exist, err := s.checkUserLoginExist(ctx, data.Login)
 	if err != nil {
-		if errors.Is(err, errapp.LoginExist) {
-			return err
-		}
+		return fmt.Errorf("s.checkUserLoginExist error: %v", err)
+	}
 
-		return fmt.Errorf("s.checkUserLogin error: %v", err)
+	if exist {
+		return errapp.LoginExist
 	}
 
 	id := uuid.New()
 	encryptedPassword, err := password.Encrypt(data.Password)
 	if err != nil {
-		return err
+		return fmt.Errorf("password.Encrypt error: %v", err)
 	}
 
 	accessModel := models.UserAccess{
@@ -71,23 +71,23 @@ func (s *service) CreateUser(data Data) (err error) {
 		Friends: nil,
 	}
 
-	err = s.storage.CreateUser(accessModel, dataModel)
+	err = s.storage.CreateUser(ctx, accessModel, dataModel)
 	if err != nil {
-		return err
+		return fmt.Errorf("s.storage.CreateUser error: %v", err)
 	}
 
 	return nil
 }
 
-func (s *service) checkUserLogin(userLogin string) (err error) {
-	exist, err := s.storage.CheckLoginExist(userLogin)
+func (s *service) checkUserLoginExist(ctx context.Context, userLogin string) (bool, error) {
+	exist, err := s.storage.CheckLoginExist(ctx, userLogin)
 	if err != nil {
-		return fmt.Errorf("s.storage.CheckLoginExist error: %v", err)
+		return false, fmt.Errorf("s.storage.CheckLoginExist error: %v", err)
 	}
 
 	if exist {
-		return fmt.Errorf("%w", errapp.LoginExist)
+		return true, nil
 	}
 
-	return nil
+	return false, nil
 }

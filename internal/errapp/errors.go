@@ -7,6 +7,5 @@ var (
 	AccessDataNotFound = errors.New("access data not found")
 	LoginExist         = errors.New("login exist")
 	InvalidToken       = errors.New("invalid token")
-
-	DBPing = errors.New("db ping")
+	EmptyToken         = errors.New("empty token")
 )

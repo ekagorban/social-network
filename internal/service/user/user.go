@@ -1,7 +1,7 @@
 package user
 
 import (
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 
@@ -22,19 +22,19 @@ type Data struct {
 }
 
 type Service interface {
-	GetAll() (users []Data, err error)
-	GetOne(id uuid.UUID) (user Data, err error)
-	UpdateOne(id uuid.UUID, user Data) (err error)
-	GetUserFriends(id uuid.UUID) (users []Data, err error)
-	AddUserFriend(userID uuid.UUID, frienID uuid.UUID) (err error)
+	GetAll(ctx context.Context) (users []Data, err error)
+	GetOne(ctx context.Context, id uuid.UUID) (user Data, err error)
+	UpdateOne(ctx context.Context, id uuid.UUID, user Data) (err error)
+	GetUserFriends(ctx context.Context, id uuid.UUID) (users []Data, err error)
+	AddUserFriend(ctx context.Context, userID uuid.UUID, frienID uuid.UUID) (err error)
 }
 
 type Storage interface {
-	Users() (users []models.UserData, err error)
-	User(id uuid.UUID) (user models.UserData, err error)
-	UpdateUser(id uuid.UUID, user models.UserData) (err error)
-	Friends(id uuid.UUID) (users []models.UserData, err error)
-	AddFriend(userID uuid.UUID, friendID uuid.UUID) (err error)
+	Users(ctx context.Context) (users []models.UserData, err error)
+	User(ctx context.Context, id uuid.UUID) (user models.UserData, err error)
+	UpdateUser(ctx context.Context, id uuid.UUID, user models.UserData) (err error)
+	Friends(ctx context.Context, id uuid.UUID) (users []models.UserData, err error)
+	AddFriend(ctx context.Context, userID uuid.UUID, friendID uuid.UUID) (err error)
 }
 
 type service struct {
@@ -45,8 +45,8 @@ func NewService(store Storage) Service {
 	return &service{store}
 }
 
-func (s *service) GetAll() (users []Data, err error) {
-	usersModel, err := s.storage.Users()
+func (s *service) GetAll(ctx context.Context) (users []Data, err error) {
+	usersModel, err := s.storage.Users(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("s.storage.Users error: %v", err)
 	}
@@ -66,11 +66,11 @@ func (s *service) GetAll() (users []Data, err error) {
 	return users, nil
 }
 
-func (s *service) GetOne(id uuid.UUID) (user Data, err error) {
-	userModel, err := s.storage.User(id)
+func (s *service) GetOne(ctx context.Context, id uuid.UUID) (user Data, err error) {
+	userModel, err := s.storage.User(ctx, id)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return Data{}, errapp.UserDataNotFound
+		if errors.Is(err, errapp.UserDataNotFound) {
+			return Data{}, fmt.Errorf("s.storage.User error: %w", errapp.UserDataNotFound)
 		}
 
 		return Data{}, fmt.Errorf("s.storage.User error: %v", err)
@@ -89,7 +89,7 @@ func (s *service) GetOne(id uuid.UUID) (user Data, err error) {
 	return user, nil
 }
 
-func (s *service) UpdateOne(id uuid.UUID, user Data) error {
+func (s *service) UpdateOne(ctx context.Context, id uuid.UUID, user Data) error {
 	userModel := models.UserData{
 		ID:      id,
 		Name:    user.Name,
@@ -100,10 +100,10 @@ func (s *service) UpdateOne(id uuid.UUID, user Data) error {
 		City:    user.City,
 	}
 
-	err := s.storage.UpdateUser(id, userModel)
+	err := s.storage.UpdateUser(ctx, id, userModel)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return errapp.UserDataNotFound
+		if errors.Is(err, errapp.UserDataNotFound) {
+			return fmt.Errorf("s.storage.UpdateUser error: %w", errapp.UserDataNotFound)
 		}
 
 		return fmt.Errorf("s.storage.UpdateUser error: %v", err)
@@ -112,9 +112,12 @@ func (s *service) UpdateOne(id uuid.UUID, user Data) error {
 	return nil
 }
 
-func (s *service) GetUserFriends(id uuid.UUID) (users []Data, err error) {
-	usersModel, err := s.storage.Friends(id)
+func (s *service) GetUserFriends(ctx context.Context, id uuid.UUID) (users []Data, err error) {
+	usersModel, err := s.storage.Friends(ctx, id)
 	if err != nil {
+		if errors.Is(err, errapp.UserDataNotFound) {
+			return nil, fmt.Errorf("s.storage.Friends error: %w", errapp.UserDataNotFound)
+		}
 		return nil, err
 	}
 
@@ -133,6 +136,15 @@ func (s *service) GetUserFriends(id uuid.UUID) (users []Data, err error) {
 	return users, nil
 
 }
-func (s *service) AddUserFriend(userID uuid.UUID, friendID uuid.UUID) (err error) {
-	return s.storage.AddFriend(userID, friendID)
+func (s *service) AddUserFriend(ctx context.Context, userID uuid.UUID, friendID uuid.UUID) error {
+	err := s.storage.AddFriend(ctx, userID, friendID)
+	if err != nil {
+		if errors.Is(err, errapp.UserDataNotFound) {
+			return fmt.Errorf("s.storage.AddFriend error: %w", errapp.UserDataNotFound)
+		}
+
+		return fmt.Errorf("s.storage.UpdateUser error: %v", err)
+	}
+
+	return nil
 }

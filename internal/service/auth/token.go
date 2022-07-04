@@ -31,7 +31,7 @@ func (s *service) generateToken(login string) (string, error) {
 	return tokenStr, nil
 }
 
-func (s *service) parseToken(accessToken string) (err error) {
+func (s *service) parseToken(accessToken string) error {
 	token, err := jwt.ParseWithClaims(accessToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected method %v", token.Header["alg"])

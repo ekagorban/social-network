@@ -1,23 +1,30 @@
 package mysql
 
 import (
+	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
+	"social-network/internal/errapp"
 	"social-network/internal/models"
 
 	"github.com/google/uuid"
 )
 
-// CheckAccessExist - checks login-password pair exist
-func (s *Store) LoadPassword(login string) (userID uuid.UUID, password string, err error) {
+// LoadPassword - get password by login
+func (s *Store) LoadPassword(ctx context.Context, login string) (userID uuid.UUID, password string, err error) {
 	query := fmt.Sprintf(`
 		select user_id, password 
 		from %s 
-		where 
-			login = ?`, models.UserAccessTable)
+		where login = ?`, models.UserAccessTable)
 
-	err = s.db.QueryRow(query, login).Scan(&userID, &password)
+	err = s.db.QueryRowContext(ctx, query, login).Scan(&userID, &password)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return uuid.Nil, "", errapp.AccessDataNotFound
+		}
+
 		return uuid.Nil, "", fmt.Errorf("s.db.QueryRow error: %v", err)
 	}
 

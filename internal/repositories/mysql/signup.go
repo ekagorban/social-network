@@ -13,7 +13,7 @@ import (
 )
 
 // CheckLoginExist - checks login exist
-func (s *Store) CheckLoginExist(login string) (exist bool, err error) {
+func (s *Store) CheckLoginExist(ctx context.Context, login string) (bool, error) {
 	query := fmt.Sprintf(`
 		select user_id 
 		from %s 
@@ -21,33 +21,24 @@ func (s *Store) CheckLoginExist(login string) (exist bool, err error) {
 
 	var userID uuid.UUID
 
-	err = s.db.QueryRow(query, login).Scan(&userID)
+	err := s.db.QueryRowContext(ctx, query, login).Scan(&userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
 		}
 
-		return false, err
+		return false, fmt.Errorf("s.db.QueryRow error: %v", err)
 	}
 
 	return true, nil
 }
 
-func (s *Store) CreateUser(access models.UserAccess, user models.UserData) (err error) {
-	ctx := context.Background()
-
+func (s *Store) CreateUser(ctx context.Context, access models.UserAccess, user models.UserData) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("s.db.BeginTx error: %v", err)
 	}
-	defer func(tx *sql.Tx) {
-		err := tx.Rollback()
-		if err != nil {
-			if !errors.Is(err, sql.ErrTxDone) {
-				log.Printf("tx.Rollback error: %v", err)
-			}
-		}
-	}(tx)
+	defer transactionRollback(tx)
 
 	log.Println("CreateUser start transaction...")
 
@@ -70,7 +61,7 @@ func (s *Store) CreateUser(access models.UserAccess, user models.UserData) (err 
 	return nil
 }
 
-func (s *Store) createAccessData(ctx context.Context, tx *sql.Tx, access models.UserAccess) (err error) {
+func (s *Store) createAccessData(ctx context.Context, tx *sql.Tx, access models.UserAccess) error {
 	query := fmt.Sprintf(`
 		insert into %s (
 			login,
@@ -78,7 +69,7 @@ func (s *Store) createAccessData(ctx context.Context, tx *sql.Tx, access models.
 			user_id
 		) values (?, ?, ?)`, models.UserAccessTable)
 
-	_, err = tx.ExecContext(ctx, query,
+	_, err := tx.ExecContext(ctx, query,
 		access.Login,
 		access.Password,
 		access.UserID,
@@ -90,7 +81,7 @@ func (s *Store) createAccessData(ctx context.Context, tx *sql.Tx, access models.
 	return nil
 }
 
-func (s *Store) createUserData(ctx context.Context, tx *sql.Tx, user models.UserData) (err error) {
+func (s *Store) createUserData(ctx context.Context, tx *sql.Tx, user models.UserData) error {
 	query := fmt.Sprintf(`
 		insert into %s (
 			id, 
@@ -102,7 +93,7 @@ func (s *Store) createUserData(ctx context.Context, tx *sql.Tx, user models.User
 			city
 		) values (?, ?, ?, ?, ?, ?, ?)`, models.UserDataTable)
 
-	_, err = tx.ExecContext(ctx, query,
+	_, err := tx.ExecContext(ctx, query,
 		user.ID,
 		user.Name,
 		user.Surname,

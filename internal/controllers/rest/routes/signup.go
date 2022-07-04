@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/http"
@@ -23,15 +24,19 @@ func SignUp(r *gin.Engine, service signup.Service) {
 
 func signUp(service signup.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx, cancel := context.WithCancel(c)
+		defer cancel()
+
 		var data signup.Data
 		if err := c.ShouldBindJSON(&data); err != nil {
 			response.ErrorMessageJSON(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		err := service.CreateUser(data)
+		err := service.CreateUser(ctx, data)
 		if err != nil {
-			log.Println(err)
+			log.Printf("service.CreateUser error: %v", err)
+
 			if errors.Is(err, errapp.LoginExist) {
 				response.ErrorMessageJSON(c, http.StatusConflict, errapp.LoginExist.Error())
 				return

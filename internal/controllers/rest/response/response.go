@@ -26,8 +26,4 @@ func ErrorMessageJSON(c *gin.Context, status int, msg string) {
 		Success: false,
 		Message: msg,
 	})
-	// c.JSON(status, errorMessage{
-	// 	Success: false,
-	// 	Message: msg,
-	// })
 }

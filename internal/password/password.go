@@ -11,14 +11,20 @@ func Encrypt(password string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("bcrypt.GenerateFromPassword error: %v", err)
 	}
+
 	return string(encryptedPassword), nil
 }
 
 func Check(password string) error {
-	hash, _ := Encrypt(password)
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	hash, err := Encrypt(password)
 	if err != nil {
-		return err
+		return fmt.Errorf("encrypt error: %v", err)
 	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return fmt.Errorf("bcrypt.CompareHashAndPassword error: %v", err)
+	}
+
 	return nil
 }
