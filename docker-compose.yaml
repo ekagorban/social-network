@@ -1,6 +1,7 @@
-  version: '2'
+  version: '3'
   services:
     db:
+      platform: linux/x86_64
       build:
         context: ./docker/db
       restart: always
@@ -13,6 +14,7 @@
         - "3306:3306"
       tty: true
     app:
+      platform: linux/x86_64
       build:
         context: ./
       networks:
