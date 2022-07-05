@@ -38,8 +38,9 @@ func signIn(service auth.Service) gin.HandlerFunc {
 		if err != nil {
 			log.Printf("service.SignIn error: %v", err)
 
-			if errors.Is(err, errapp.AccessDataNotFound) {
-				response.ErrorMessageJSON(c, http.StatusConflict, errapp.AccessDataNotFound.Error())
+			if errors.Is(err, errapp.AccessDataNotFound) ||
+				errors.Is(err, errapp.PasswordCheckError) {
+				response.ErrorMessageJSON(c, http.StatusUnauthorized, response.AccessDataError)
 				return
 			}
 

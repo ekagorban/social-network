@@ -13,12 +13,12 @@ import (
 
 type Data struct {
 	ID      uuid.UUID `json:"id"`
-	Name    string    `json:"name,required"`
-	Surname string    `json:"surname,required"`
-	Age     uint      `json:"age,required"`
-	Gender  string    `json:"gender,required"`
-	Hobbies string    `json:"hobbies,required"`
-	City    string    `json:"city,required"`
+	Name    string    `json:"name" binding:"required,max=100"`
+	Surname string    `json:"surname" binding:"required,max=100"`
+	Age     uint      `json:"age" binding:"required,max=100"`
+	Gender  string    `json:"gender" binding:"required,eq=m|eq=f"`
+	Hobbies string    `json:"hobbies" binding:"required,max=1000"`
+	City    string    `json:"city" binding:"required,max=100"`
 }
 
 type Service interface {
@@ -26,7 +26,7 @@ type Service interface {
 	GetOne(ctx context.Context, id uuid.UUID) (user Data, err error)
 	UpdateOne(ctx context.Context, id uuid.UUID, user Data) (err error)
 	GetUserFriends(ctx context.Context, id uuid.UUID) (users []Data, err error)
-	AddUserFriend(ctx context.Context, userID uuid.UUID, frienID uuid.UUID) (err error)
+	AddUserFriend(ctx context.Context, userID uuid.UUID, friendID uuid.UUID) (err error)
 }
 
 type Storage interface {

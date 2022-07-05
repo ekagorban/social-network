@@ -39,6 +39,11 @@ func (s *service) parseToken(accessToken string) error {
 		return s.signingKey, nil
 	})
 	if err != nil {
+		if jwtErr, ok := err.(*jwt.ValidationError); ok {
+			if jwtErr.Errors == jwt.ValidationErrorExpired {
+				return errapp.ExpiredToken
+			}
+		}
 		return fmt.Errorf("jwt.ParseWithClaims error: %v", err)
 	}
 
