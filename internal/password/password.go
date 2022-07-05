@@ -15,13 +15,8 @@ func Encrypt(password string) (string, error) {
 	return string(encryptedPassword), nil
 }
 
-func Check(password string) error {
-	hash, err := Encrypt(password)
-	if err != nil {
-		return fmt.Errorf("encrypt error: %v", err)
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+func Check(password, userPasswordHash string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(userPasswordHash), []byte(password))
 	if err != nil {
 		return fmt.Errorf("bcrypt.CompareHashAndPassword error: %v", err)
 	}

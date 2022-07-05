@@ -55,9 +55,9 @@ func (s *service) SignIn(ctx context.Context, data SignInData) (AccessData, erro
 		return AccessData{}, fmt.Errorf("s.storage.LoadPassword error: %v", err)
 	}
 
-	err = password.Check(userPassword)
+	err = password.Check(data.Password, userPassword)
 	if err != nil {
-		return AccessData{}, fmt.Errorf("password.Check error: %v", err)
+		return AccessData{}, errapp.PasswordCheckError
 	}
 
 	token, err := s.generateToken(data.Login)
@@ -76,11 +76,7 @@ func (s *service) SignIn(ctx context.Context, data SignInData) (AccessData, erro
 func (s *service) CheckToken(token string) error {
 	err := s.parseToken(token)
 	if err != nil {
-		if errors.Is(err, errapp.InvalidToken) {
-			return fmt.Errorf("s.parseToken error: %w", errapp.InvalidToken)
-		}
-
-		return fmt.Errorf("s.parseToken error: %v", err)
+		return err
 	}
 
 	return nil

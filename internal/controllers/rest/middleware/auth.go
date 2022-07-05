@@ -29,6 +29,11 @@ func CheckAccess(service auth.Service) gin.HandlerFunc {
 				return
 			}
 
+			if errors.Is(err, errapp.ExpiredToken) {
+				response.ErrorMessageJSON(c, http.StatusUnauthorized, errapp.ExpiredToken.Error())
+				return
+			}
+
 			response.ErrorMessageJSON(c, http.StatusUnauthorized, response.InternalError)
 			return
 		}
