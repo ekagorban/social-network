@@ -22,8 +22,8 @@ type Data struct {
 }
 
 type Service interface {
-	GetAll(ctx context.Context) (users []Data, err error)
-	GetOne(ctx context.Context, id uuid.UUID) (user Data, err error)
+	Get(ctx context.Context, name string, surname string) (users []Data, err error)
+	GetByID(ctx context.Context, id uuid.UUID) (user Data, err error)
 	UpdateOne(ctx context.Context, id uuid.UUID, user Data) (err error)
 	GetUserFriends(ctx context.Context, id uuid.UUID) (users []Data, err error)
 	AddUserFriend(ctx context.Context, userID uuid.UUID, friendID uuid.UUID) (err error)
@@ -31,6 +31,7 @@ type Service interface {
 
 type Storage interface {
 	Users(ctx context.Context) (users []models.UserData, err error)
+	UsersByFilters(ctx context.Context, name string, surname string) (users []models.UserData, err error)
 	User(ctx context.Context, id uuid.UUID) (user models.UserData, err error)
 	UpdateUser(ctx context.Context, id uuid.UUID, user models.UserData) (err error)
 	Friends(ctx context.Context, id uuid.UUID) (users []models.UserData, err error)
@@ -45,10 +46,19 @@ func NewService(store Storage) Service {
 	return &service{store}
 }
 
-func (s *service) GetAll(ctx context.Context) (users []Data, err error) {
-	usersModel, err := s.storage.Users(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("s.storage.Users error: %v", err)
+func (s *service) Get(ctx context.Context, name string, surname string) (users []Data, err error) {
+	var usersModel []models.UserData
+
+	if name == "" && surname == "" {
+		usersModel, err = s.storage.Users(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("s.storage.Users error: %v", err)
+		}
+	} else {
+		usersModel, err = s.storage.UsersByFilters(ctx, name, surname)
+		if err != nil {
+			return nil, fmt.Errorf("s.storage.UsersByFilters error: %v", err)
+		}
 	}
 
 	users = make([]Data, len(usersModel))
@@ -66,7 +76,7 @@ func (s *service) GetAll(ctx context.Context) (users []Data, err error) {
 	return users, nil
 }
 
-func (s *service) GetOne(ctx context.Context, id uuid.UUID) (user Data, err error) {
+func (s *service) GetByID(ctx context.Context, id uuid.UUID) (user Data, err error) {
 	userModel, err := s.storage.User(ctx, id)
 	if err != nil {
 		if errors.Is(err, errapp.UserDataNotFound) {
