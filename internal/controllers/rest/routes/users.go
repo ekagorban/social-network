@@ -19,6 +19,7 @@ import (
 
 /*
 [get] /users - get all users (return user list)
+[get] /users?name=""&surname="" - get users by filters (return user list)
 [get] /user/:id - get user by ID (return user)
 [put] /user/:id -  change user data
 [get] /friends/:id - get all user friends
@@ -38,15 +39,18 @@ func User(r *gin.Engine, service user.Service, authService auth.Service) {
 	v1.PUT("/friend/:userID/:friendID", putUserFriend(service))
 }
 
-// getUsers - get all users
+// getUsers - get users
 func getUsers(service user.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithCancel(c)
 		defer cancel()
 
-		data, err := service.GetAll(ctx)
+		name := c.DefaultQuery("name", "")
+		surname := c.DefaultQuery("surname", "")
+
+		data, err := service.Get(ctx, name, surname)
 		if err != nil {
-			log.Printf("service.GetAll error: %v", err)
+			log.Printf("service.Get error: %v", err)
 
 			response.ErrorMessageJSON(c, http.StatusInternalServerError, response.InternalError)
 			return
@@ -74,9 +78,9 @@ func getUser(service user.Service) gin.HandlerFunc {
 			return
 		}
 
-		data, err := service.GetOne(ctx, id)
+		data, err := service.GetByID(ctx, id)
 		if err != nil {
-			log.Printf("service.GetOne error: %v", err)
+			log.Printf("service.GetByID error: %v", err)
 
 			if errors.Is(err, errapp.UserDataNotFound) {
 				response.ErrorMessageJSON(c, http.StatusNotFound, errapp.UserDataNotFound.Error())

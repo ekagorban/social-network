@@ -1,6 +1,8 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 const UserDataTable = `user_data`
 const FriendsTable = `friends`

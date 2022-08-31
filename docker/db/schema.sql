@@ -23,6 +23,7 @@ create table if not exists user_access
 
 create table if not exists friends
 (
+    created_time timestamp not null default now(),
     user_id   varchar(36) not null,
     friend_id varchar(36) not null,
     primary key (user_id, friend_id),
@@ -33,7 +34,3 @@ create table if not exists friends
         foreign key (user_id) references user_data (id)
             on update cascade on delete cascade
 );
-
-create table if not exists testt(
-    id serial
-)

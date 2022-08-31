@@ -15,11 +15,16 @@ type Store struct {
 }
 
 func New(cfg *mysqldriver.Config) (*Store, error) {
+
 	dsn := cfg.FormatDSN()
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("sql.Open error: %v; DSN: %s", err, dsn)
 	}
+	//
+	db.SetConnMaxLifetime(time.Minute * 3)
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(10)
 
 	err = tryConnect(db)
 	if err != nil {
