@@ -18,7 +18,8 @@ func (s *Store) UsersByFilters(ctx context.Context, name string, surname string)
 			hobbies,
 			city
 		from %s
-		where name like ? and surname like ?`, models.UserDataTable)
+		where name like ? and surname like ?
+		order by id`, models.UserDataTable)
 
 	rows, err := s.db.QueryContext(ctx, query, name, surname)
 	if err != nil {
