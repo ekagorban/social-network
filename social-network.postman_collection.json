@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "62f042e0-ffbe-48d6-a628-d572c99fe8df",
+		"_postman_id": "31628bda-60b5-4c5f-9d74-c81d5f38ec30",
 		"name": "social-network",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "16768423"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -63,7 +62,7 @@
 			"response": []
 		},
 		{
-			"name": "get user",
+			"name": "get user by id",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -166,6 +165,74 @@
 					"path": [
 						"v1",
 						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all users by name and surname",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{TOKEN}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTYzMzIxNDksImlhdCI6MTY1NjMyODU0OSwidXNlcm5hbWUiOiJmZmYifQ.1WhBjA89hGSoUOh5qnignzGb7_ccjeBi1NIdRVWEWMk",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{HOST}}:{{PORT}}/v1/users/?name=Jessyca&surname=Thiel",
+					"host": [
+						"{{HOST}}"
+					],
+					"port": "{{PORT}}",
+					"path": [
+						"v1",
+						"users",
+						""
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "Jessyca"
+						},
+						{
+							"key": "surname",
+							"value": "Thiel"
+						}
 					]
 				}
 			},
