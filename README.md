@@ -22,7 +22,6 @@ API:
 
 [GET]   /v1/user/:id                    получить анкету пользователя по id
 [GET]   /v1/users                       получить всех пользователей
-[GET]   /v1/users/?name=N&surname=S     получить всех пользователей по name и surname
 [GET]   /v1/friends/:userID             получить друзей пользователя по его id
 [PUT]   /v1/friend/:userID/:friendID    добавить в друзья к пользователю userID пользователя friendID   
 [PUT]   /v1/user/:id                    обновить анкету пользователя по его id   
