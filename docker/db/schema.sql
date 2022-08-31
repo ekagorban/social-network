@@ -10,6 +10,8 @@ create table if not exists user_data
     city    varchar(100)  null
 );
 
+--CREATE INDEX user_data_name_IDX USING BTREE ON user_data (name,surname);
+
 create table if not exists user_access
 (
     login    varchar(20)  not null

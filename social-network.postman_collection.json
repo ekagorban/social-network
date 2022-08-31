@@ -214,7 +214,7 @@
 					}
 				},
 				"url": {
-					"raw": "{{HOST}}:{{PORT}}/v1/users/?name=Jessyca&surname=Thiel",
+					"raw": "{{HOST}}:{{PORT}}/v1/users/?name=name_user1&surname=surname_user1",
 					"host": [
 						"{{HOST}}"
 					],
@@ -227,11 +227,11 @@
 					"query": [
 						{
 							"key": "name",
-							"value": "Jessyca"
+							"value": "name_user1"
 						},
 						{
 							"key": "surname",
-							"value": "Thiel"
+							"value": "surname_user1"
 						}
 					]
 				}
@@ -413,7 +413,7 @@
 	"variable": [
 		{
 			"key": "TOKEN",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NTY5Nzg5MDUsImlhdCI6MTY1Njg5MjUwNSwidXNlcm5hbWUiOiJ1c2VyMSJ9.Pq6iSdJI8IMurcqRlgQSgPpi8m58tj_Bgi5D9ifM2PE",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjIwNDQ5MTIsImlhdCI6MTY2MTk1ODUxMiwidXNlcm5hbWUiOiJsb2dpbl91c2VyMSJ9.Kn7CRNtOgQgAmtMsZYr8PhXt6YLrH9hLuAuMnXMsoLc",
 			"type": "string"
 		},
 		{
