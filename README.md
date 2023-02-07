@@ -1,4 +1,4 @@
-##### Первый запуск контейнера:
+##### Первый запуск контейне
 
 cd social-network
 docker-compose build
